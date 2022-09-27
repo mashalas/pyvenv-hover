@@ -1,7 +1,7 @@
 #!/usr/bin/sh
 
 dirname=./env1 # каталог, в котором создать виртуальное окружение
-modules_list=(six numpy sklearn) # список модулей необходимых в этом виртуальное окружении
+modules_list=(six numpy sklearn matplotlib pandas notebook) # список модулей необходимых в этом виртуальное окружении
 
 if [ ! -f ${dirname}/pyvenv.cfg ]
 then
@@ -50,7 +50,8 @@ do
 done
 
 # список установленных модулей
-#pip3 list
+pip3 list
 
 # запуск скрипта в текущем виртуальном окружении
-python3 read_table.py
+#python3 read_table.py
+jupyter notebook &

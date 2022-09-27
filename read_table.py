@@ -21,9 +21,6 @@ def get_data_type(s):
         pass
     return "s"
 
-#t = get_data_type("123.5.k")
-#print(t)
-#exit(0)
 
 def is_int(s):
     try:
@@ -32,6 +29,7 @@ def is_int(s):
     except:
         pass
     return False
+
 
 def is_float(s):
     s = s.replace(",", ".")
@@ -42,12 +40,8 @@ def is_float(s):
         pass
     return False
 
-#s1 = "1,h2"
-#print(s1, is_int(s1))
-#print(s1, is_float(s1))
-#exit(0)
 
-def read_table_from_file(filename, Header, DataTypes, divider = "\t", first_row_is_header = True, data_rows_max_count = -1, continue_on_wrong_columns_count = False):
+def read_table(filename, Header, DataTypes, divider = ",", first_row_is_header = True, data_rows_max_count = -1, continue_on_wrong_columns_count = False):
     DataTable = []
     Header.clear()
     DataTypes.clear()
@@ -96,9 +90,10 @@ def read_table_from_file(filename, Header, DataTypes, divider = "\t", first_row_
     f.close()
     return DataTable
 
-Header = ["some", "thing", "unnecessary"]
-DataTypes = []
-tbl = read_table_from_file(filename, Header, DataTypes, divider = ",")
-pprint.pprint(tbl[0:5])
-print("Header:", Header)
-print("DataTypes:", DataTypes)
+if __name__ == "__main__":
+    Header = ["some", "thing", "unnecessary"]
+    DataTypes = []
+    tbl = read_table(filename, Header, DataTypes, divider = ",")
+    pprint.pprint(tbl[0:5])
+    print("Header:", Header)
+    print("DataTypes:", DataTypes)

@@ -14,24 +14,12 @@ if __name__ == "__main__":
     print(T)
 
     # две входные переменные
-    X_rows_names = ["x", "y"] # список столбцов для формирования X
-    X = np.zeros((rows_count, len(X_rows_names)), float)  # минус столбец с буквами~серийный номер, минут столбец с результатом
-    for i in range(len(T["Data"])):
-        k = 0
-        for j in range(len(T["ColumnsNames"])):
-            if T["ColumnsNames"][j] in X_rows_names:
-                X[i][k] = float(T["Data"][i][j])
-                k += 1
+    X = read_table.table_to_numpy__by_names(T, ["x", "y"])
     print("------- X --------")
     print(X)
 
     # одна выходная переменная
-    Y_rows_names = ["z"] # список столбцов для формирования Y
-    Y = np.zeros((rows_count, ), float)
-    for i in range(len(T["Data"])):
-        for j in range(len(T["ColumnsNames"])):
-            if T["ColumnsNames"][j] in Y_rows_names:
-                Y[i] = float(T["Data"][i][j])
+    Y = read_table.table_to_numpy__by_names(T, ["z"])
     print("------- Y --------")
     print(Y)
 

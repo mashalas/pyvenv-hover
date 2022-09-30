@@ -2,6 +2,7 @@
 
 import datetime
 import math
+import numpy as np
 import pprint
 #import re
 
@@ -73,7 +74,9 @@ def is_date(s):
     #if symbol_is_digit(s[0]) and
     return False
 
-
+#---------------------------Попытаться определить тип данных по строке: целое, дробное, дата--------------------------
+# Возможные форматы даты: dd.mm.yyyy  yyyy.mm.dd после даты возможно время, любая часть времени может быть пропущена - тогда она присваивается 0
+# Возвращается массив из двух элементов первым тип: i(integer) f(float) d(date) s{string), потом результат разбора - целое и дробное число, дата (datetime) или строка
 def parse_str(s):
     # int
     try:
@@ -90,7 +93,7 @@ def parse_str(s):
     except:
         pass
 
-    year = None
+    year = None # когда year == None - дату не удалось выделить
     month = None
     day = None
     hour = 0
@@ -98,16 +101,16 @@ def parse_str(s):
     second = 0
     # dd.mm.yyyy
     # 01234567890
-    if is_digit_range(s, 0, 2) and is_digit_range(s, 3, 5) and is_digit_range(s, 6, 10): #and s[2] in [".", "-"] and s[5] in [".", "-"]:
-        # dd.mm.yyyy или dd-mm-yyyy
+    if is_digit_range(s, 0, 2) and is_digit_range(s, 3, 5) and is_digit_range(s, 6, 10) and not(s[2].isdigit()) and not(s[5].isdigit()):
+        # dd.mm.yyyy или dd-mm-yyyy или dd/mm/yyyy или любой другой не цифровой сивол разделяет компоненты даты
         day = int(s[0:2])
         month = int(s[3:5])
         year = int(s[6:10])
 
     #yyyy.mm.dd
     #01234567890
-    if is_digit_range(s, 0, 4) and is_digit_range(s, 5, 7) and is_digit_range(s, 8, 10): #and s[4] in [".", "-"] and s[7] in [".", "-"]:
-        # yyyy.mm.dd или yyyy-mm-dd
+    if is_digit_range(s, 0, 4) and is_digit_range(s, 5, 7) and is_digit_range(s, 8, 10) and not(s[4].isdigit()) and not(s[7].isdigit()):
+        # yyyy.mm.dd или yyyy-mm-dd или yyyy/mm/dd или любой другой не цифровой сивол разделяет компоненты даты
         year = int(s[0:4])
         month = int(s[5:7])
         day = int(s[8:10])
@@ -116,34 +119,36 @@ def parse_str(s):
         # dd.mm.yyyy hh:mm:ss
         # 01234567890123456789
         if len(s) >= 13:
-            if is_digit_range(s, 11, 13):
+            if is_digit_range(s, 11, 13) and not(s[10].isdigit()):
                 hour = int(s[11:13])
             else:
                 year = None
         if len(s) >= 16:
-            if is_digit_range(s, 14, 16):
+            if is_digit_range(s, 14, 16) and not(s[13].isdigit()):
                 minute = int(s[14:16])
             else:
                 year =None
 
         if len(s) >= 19:
-            if is_digit_range(s, 17, 19):
+            if is_digit_range(s, 17, 19) and not(s[16].isdigit()):
                 second = int(s[17:19])
             else:
                 year = None
         if len(s) > 19:
+            # кроме даты+времени есть другие символы
             year = None
         if year != None:
             try:
                 x = datetime.datetime(year, month, day, hour, minute, second)
                 return ["d", x]
             except:
-                pass
+                Year = None
 
     return ["s", s]
 
 #s3 = "123,5.5";
 #s3 = "29.09.2022 11:12:13"
+#s3 = "2022.09.29 11:12:13"
 #parsed = parse_str(s3)
 #print(parsed)
 #data_type, data_value = parse_str(s3)
@@ -267,17 +272,18 @@ def array_to_str(X, divider = " ", max_count = -1):
     return s
 
 
-def table_info(A, print_since=0, print_stop=3, digits = 5, lower_procentile=0.02, upper_procentile=0.98):
+#-----Статистическая информация о таблице T + вывод строк с print_since до print_until-----
+def table_info(A, print_since=0, print_until=10, digits = 5, lower_procentile=0.02, upper_procentile=0.98):
     PRINT_MAX_COUNT = 10 # максимальное количество отображаемых строк или целых чисел
     print("----- Data -----")
-    print("Rows since={} until={}" . format(print_since, print_stop))
-    pprint.pprint(A["Data"][print_since:print_stop])
+    print("Rows since={} until={}" . format(print_since, print_until))
+    pprint.pprint(A["Data"][print_since:print_until])
     print("----------------")
     if len(A["filename"]) > 0:
         print("filename: " + A["filename"])
     print("Errors:", A["Errors"])
-    print("ColumnsCount: " + str(len(A["ColumnsNames"])))
     print("RowsCount: " + str(len(A["Data"])))
+    print("ColumnsCount: " + str(len(A["ColumnsNames"])))
     print("ColumnsNames:", A["ColumnsNames"])
     print("ColumnsTypes:", A["ColumnsTypes"])
     space = "  "
@@ -311,7 +317,7 @@ def table_info(A, print_since=0, print_stop=3, digits = 5, lower_procentile=0.02
             msg = A["ColumnsNames"][i] + ":"
             msg += " min_len=" + str(min_len)
             msg += " max_len=" + str(max_len)
-            msg += " diff_count" + str(len(str_values_list))
+            msg += " diff_count=" + str(len(str_values_list))
             print(space + msg)
             #print(space + space + "min_len:" + str(min_len))
             #print(space + space + "max_len:" + str(max_len))
@@ -340,8 +346,10 @@ def table_info(A, print_since=0, print_stop=3, digits = 5, lower_procentile=0.02
                 X.append(A["Data"][j][i])
             X.sort()
             lower_procentile_position = int(lower_procentile * len(X))
+            median_position = int(0.5 * len(X))
             upper_procentile_position = int(upper_procentile * len(X))
             lower_procentile_value = X[lower_procentile_position]
+            median_value = X[median_position]
             upper_procentile_value = X[upper_procentile_position]
             msg = A["ColumnsNames"][i] + ":"
             msg += " min=" + str(round(min(X), digits))
@@ -349,6 +357,7 @@ def table_info(A, print_since=0, print_stop=3, digits = 5, lower_procentile=0.02
             msg += " max=" + str(round(max(X), digits))
             msg += " stddev=" + str(round(stddev(X), digits))
             msg += " prc(" + str(lower_procentile) + ")=" + str(lower_procentile_value)
+            msg += " prc(" + str(0.5) + ")=" + str(median_value)
             msg += " prc(" + str(upper_procentile) + ")=" + str(upper_procentile_value)
             print(space + msg)
 
@@ -364,8 +373,10 @@ def table_info(A, print_since=0, print_stop=3, digits = 5, lower_procentile=0.02
                 X.append(float(A["Data"][j][i]))
             X.sort()
             lower_procentile_position = int(lower_procentile * len(X))
+            median_position = int(0.5 * len(X))
             upper_procentile_position = int(upper_procentile * len(X))
             lower_procentile_value = int(X[lower_procentile_position])
+            median_value = int(X[median_position])
             upper_procentile_value = int(X[upper_procentile_position])
             msg = A["ColumnsNames"][i] + ":"
             msg += " min=" + str(int(min(X)))
@@ -373,6 +384,7 @@ def table_info(A, print_since=0, print_stop=3, digits = 5, lower_procentile=0.02
             msg += " max=" + str(int(max(X)))
             msg += " stddev=" + str(round(stddev(X), digits))
             msg += " prc(" + str(lower_procentile) + ")=" + str(lower_procentile_value)
+            msg += " prc(" + str(0.5) + ")=" + str(median_value)
             msg += " prc(" + str(upper_procentile) + ")=" + str(upper_procentile_value)
             print(space + msg)
 
@@ -396,6 +408,48 @@ def table_info(A, print_since=0, print_stop=3, digits = 5, lower_procentile=0.02
             #msg += " max=" + str(max_value)
             print(space + msg)
 
+
+#----------------------Сформировать numpy-массив на основе указанных по индексу столбцов------------------------
+def table_to_numpy__by_indexes(T, ColumnsIndexes):
+    rows_count = len(T["Data"])
+    if len(ColumnsIndexes) > 1:
+        # несколько столбцов
+        Result = np.zeros((rows_count, len(ColumnsIndexes)), float)  # минус столбец с буквами~серийный номер, минут столбец с результатом
+        for i in range(rows_count):
+            k = 0
+            for j in range(len(T["ColumnsNames"])):
+                if j in ColumnsIndexes:
+                    Result[i][k] = float(T["Data"][i][j])
+                    k += 1
+    elif len(ColumnsIndexes) == 1:
+        # один столбец
+        Result = np.zeros((rows_count, ), float)
+        for i in range(rows_count):
+            for j in range(len(T["ColumnsNames"])):
+                if j in ColumnsIndexes:
+                    Result[i] = float(T["Data"][i][j])
+    else:
+        Result = None
+    return Result
+
+
+#----------------------Сформировать numpy-массив на основе указанных по имени столбцов------------------------
+def table_to_numpy__by_names(T, ColumnsNames):
+    # для переданного списка имён (или индексов) столбцов определить индексы этих столбцов
+    ColumnsIndexes = []
+    for i in range(len(ColumnsNames)):
+        if type(ColumnsNames[i]) == type(123):
+            # в i-й позиции массива ColumnsNames вместо имени указан индекс
+            ColumnsIndexes.append(ColumnsNames[i])
+        else:
+            # в i-й позиции массива ColumnsNames имя столбца, найти под каким номером этот столбец находися в T
+            for j in range(len(T["ColumnsNames"])):
+                if ColumnsNames[i] == T["ColumnsNames"][j]:
+                    ColumnsIndexes.append(j)
+    Result = table_to_numpy__by_indexes(T, ColumnsIndexes)
+    return Result
+
+
 if __name__ == "__main__":
     #Fibo = read_table("dataset_fibo.txt", divider = "\t")
     #pprint.pprint(Fibo)
@@ -405,3 +459,7 @@ if __name__ == "__main__":
 
     FX = read_table("/mnt/lindata/c1.xls", divider="\t")
     table_info(FX)
+
+    X_names = [5, "Ind#1"]
+    X = table_to_numpy__by_names(FX, X_names)
+    print(X[120046])
